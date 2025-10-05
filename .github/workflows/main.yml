@@ -17,7 +17,7 @@ jobs:
       - name: Run Generator
         env:
           PARSE_API_KEY: ${{ secrets.PARSE_API_KEY }}
-        run: python generateTrick.py
+        run: python generateTricks.py
       - name: Release trick.yaml
         uses: softprops/action-gh-release@v1
         with:
