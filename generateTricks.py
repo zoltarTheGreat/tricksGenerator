@@ -136,6 +136,7 @@ def save_yaml(data):
             Dumper=yaml.SafeDumper,
             default_style='"'          
         )
+        
 if __name__ == "__main__":
     trick_names = load_tricks_txt()
     print(f"Loaded {len(trick_names)} tricks from {INPUT_FILE}")
