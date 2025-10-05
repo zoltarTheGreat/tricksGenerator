@@ -127,8 +127,15 @@ def generate_yaml(trick_names, desc_map):
 
 def save_yaml(data):
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, sort_keys=False, allow_unicode=True)
-
+        yaml.dump(
+            data,
+            f,
+            sort_keys=False,
+            allow_unicode=True,
+            default_flow_style=False,   
+            Dumper=yaml.SafeDumper,
+            default_style='"'          
+        )
 if __name__ == "__main__":
     trick_names = load_tricks_txt()
     print(f"Loaded {len(trick_names)} tricks from {INPUT_FILE}")
