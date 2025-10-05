@@ -1,8 +1,10 @@
 name: "Trick List Generator"
 author: "Cristian Cabrera"
-description: "Generates a yaml list of skateboard tricks from a text file"
+description: "Generates a yaml list of skateboard tricks from a text file (poorly)"
 runs:
   using: "docker"
+  env:
+    PARSE_API_KEY: ${{secrets.PARSE_API_KEY}}
   image: "Dockerfile"
 branding:
   icon: "git-branch"
