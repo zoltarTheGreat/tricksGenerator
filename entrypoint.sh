@@ -8,7 +8,5 @@ git config --global --add safe.directory /github/workspace
 
 python3 /usr/bin/generateTrick.py
 
-git add -A && git commit -m "Update Trick List"
-git push --set-upstream origin main
 
 echo "==================="
