@@ -1,6 +1,6 @@
 name: "Trick List Generator"
 author: "Cristian Cabrera"
-description: "Generates a yaml list of skateboard tricks from a text file"
+description: "Generates a yaml list of skateboard tricks from a text file (poorly)"
 runs:
   using: "docker"
   env:

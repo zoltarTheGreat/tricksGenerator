@@ -10,7 +10,7 @@ INPUT_FILE = "tricks.txt"
 OUTPUT_FILE = "tricks.yaml"
 
 PARSEBOT_URL = "https://api.parse.bot/scraper/1871f800-c527-45f3-9a95-cdfd06e7cfa0/run"
-API_KEY = "SECRET"  # replace with your real Parse.bot key
+API_KEY = os.environ['PARSE_API_KEY']
 EXCLUDE_CHANNEL = "Braille Skateboarding"
 
 def load_tricks_txt():
@@ -26,20 +26,20 @@ def scrape_trick_list():
     soup = BeautifulSoup(r.text, "html.parser")
     tricks = {}
 
-    # Each trick is inside a <p> with <strong> for name and <em> for description
     for p in soup.select("p"):
         strong = p.find("strong")
         em = p.find("em")
         if strong and em:
-            name = strong.get_text(strip=True)
-            desc = em.get_text(strip=True)
+            raw_name = strong.get_text()
+            name = re.sub(r'^\d+\.\s*', '', raw_name).strip()
+            desc = em.get_text().strip()
             tricks[name.lower()] = desc
     return tricks
 
 def scrape_fandom(trick_name):
     base_url = "https://skateboarding.fandom.com/wiki/"
     url = base_url + urllib.parse.quote(trick_name.replace(" ", "_"))
-    info = {"invented_by": "Unknown", "year": "Unknown"}
+    info = {"invented_by": "Unknown", "year": "Unknown", "description": "Unknown"}
 
     try:
         r = requests.get(url, timeout=10)
@@ -47,16 +47,19 @@ def scrape_fandom(trick_name):
             return info
 
         soup = BeautifulSoup(r.text, "html.parser")
-        text = soup.get_text(" ", strip=True).lower()
 
-        # Inventor?
-        if "invented" in text:
-            idx = text.find("invented")
-            snippet = soup.get_text(" ", strip=True)[idx:idx+200]
+        para = soup.select_one("div.mw-parser-output > p")
+        if para and para.get_text(strip=True):
+            info["description"] = para.get_text(strip=True)
+
+        text = soup.get_text(" ", strip=True)
+
+        if "invented" in text.lower():
+            idx = text.lower().find("invented")
+            snippet = text[idx:idx+200]
             info["invented_by"] = snippet
 
-        # Year?
-        years = re.findall(r"(19\d{2}|20\d{2})", soup.get_text())
+        years = re.findall(r"(19\d{2}|20\d{2})", text)
         if years:
             info["year"] = years[0]
 
@@ -83,13 +86,28 @@ def get_youtube_video(trick):
         print(f"YouTube fetch failed for {trick}: {e}")
     return "Unknown"
 
+def get_description(trick, desc_map):
+    trick_lower = trick.lower()
+    if trick_lower in desc_map:
+        return desc_map[trick_lower]
+    for key, desc in desc_map.items():
+        if trick_lower.startswith(key) or key.startswith(trick_lower):
+            return desc
+    first_word = trick_lower.split()[0]
+    for key, desc in desc_map.items():
+        if key.startswith(first_word):
+            return desc
+    return "Unknown"
+
 def generate_yaml(trick_names, desc_map):
     data = []
     for i, trick in enumerate(trick_names, start=1):
        
-        description = desc_map.get(trick.lower(), "Unknown")
+        description = get_description(trick, desc_map)
 
         fandom_info = scrape_fandom(trick)
+        if not description or description == "Unknown":
+            description = fandom_info["description"]
 
         video = get_youtube_video(trick)
 
@@ -104,7 +122,6 @@ def generate_yaml(trick_names, desc_map):
 
         print(f"[{i}/{len(trick_names)}]  {trick}")
 
-        # polite delay to avoid hammering fandom
         time.sleep(2)
     return data
 
@@ -117,7 +134,7 @@ if __name__ == "__main__":
     print(f"Loaded {len(trick_names)} tricks from {INPUT_FILE}")
 
     desc_map = scrape_trick_list()
-    print(f"Scraped {len(desc_map)} tricks with descriptions from skateboardingtrickslist.com")
+    print(f"Scraped {len(desc_map)} tricks from skateboardingtrickslist.com")
     
     data = generate_yaml(trick_names, desc_map)
     save_yaml(data)
