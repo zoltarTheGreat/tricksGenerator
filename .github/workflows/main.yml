@@ -15,6 +15,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 pyyaml
           tree
+          pwd
       - name: Run Generator
         env:
           PARSE_API_KEY: ${{ secrets.PARSE_API_KEY }}
